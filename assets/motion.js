@@ -19,7 +19,27 @@
   // so it collapses to 0 unless we give it one explicitly. Runs
   // unconditionally — independent of GSAP/reduced-motion — since it's a
   // layout fix, not an animation.
+  //
+  // The three hero columns are grid siblings meant to read as one even
+  // photo strip (object-fit: cover crops each to a shared height) — giving
+  // each its own image's aspect-ratio instead made the middle (portrait)
+  // photo a different height than the outer two. They share equal grid
+  // column widths, so one common ratio (taken from the first) yields equal
+  // heights too. Everything else (single standalone photos) keeps its own
+  // image's ratio.
+  var heroContainers = document.querySelectorAll(".hero-images__col [data-parallax-container]");
+  if (heroContainers.length) {
+    var firstMedia = heroContainers[0].querySelector("[data-parallax]");
+    var fw = firstMedia && firstMedia.getAttribute("width");
+    var fh = firstMedia && firstMedia.getAttribute("height");
+    if (fw && fh) {
+      heroContainers.forEach(function (c) {
+        c.style.aspectRatio = fw + " / " + fh;
+      });
+    }
+  }
   document.querySelectorAll("[data-parallax-container]").forEach(function (container) {
+    if (container.closest(".hero-images__col")) return; // handled above as a group
     var media = container.querySelector("[data-parallax]");
     if (!media) return;
     var w = media.getAttribute("width");
