@@ -10,6 +10,7 @@
  *   data-parallax-speed="0.8"                direct element parallax (floating type, vertical)
  *   data-parallax-x="1.2"                    direct element parallax (horizontal drift; sign = direction)
  *   data-pin-horizontal + data-pin-track     pinned horizontal scroll moment
+ *   data-rotator                             crossfading hero image slot (two .rotator__img layers inside)
  *   data-load-in                             animated on page load, not on scroll
  */
 (function () {
@@ -28,9 +29,17 @@
   // column widths, so one common ratio (taken from the first) yields equal
   // heights too. Everything else (single standalone photos) keeps its own
   // image's ratio.
+  // data-parallax may be the <img> itself, or (for a rotating hero slot) a
+  // wrapper div around two crossfading <img> layers — either way, the
+  // dimensions live on an <img>.
+  function parallaxImg(media) {
+    if (!media) return null;
+    return media.tagName === "IMG" ? media : media.querySelector("img");
+  }
+
   var heroContainers = document.querySelectorAll(".hero-images__col [data-parallax-container]");
   if (heroContainers.length) {
-    var firstMedia = heroContainers[0].querySelector("[data-parallax]");
+    var firstMedia = parallaxImg(heroContainers[0].querySelector("[data-parallax]"));
     var fw = firstMedia && firstMedia.getAttribute("width");
     var fh = firstMedia && firstMedia.getAttribute("height");
     if (fw && fh) {
@@ -41,12 +50,95 @@
   }
   document.querySelectorAll("[data-parallax-container]").forEach(function (container) {
     if (container.closest(".hero-images__col")) return; // handled above as a group
-    var media = container.querySelector("[data-parallax]");
+    var media = parallaxImg(container.querySelector("[data-parallax]"));
     if (!media) return;
     var w = media.getAttribute("width");
     var h = media.getAttribute("height");
     if (w && h) container.style.aspectRatio = w + " / " + h;
   });
+
+  // Hero image rotator: three independent slots crossfade through a shared
+  // pool of photos. Runs unconditionally (no GSAP dependency) since it's
+  // just interval-driven CSS opacity — reduced-motion users still get the
+  // rotation, just as an instant swap (motion.css drops the transition).
+  var HERO_ROTATOR_POOL = [
+    "assets/salon-hero.webp",
+    "assets/salon-pro.webp",
+    "assets/hero-images-03.jpg",
+    "assets/two-images-with-content-02.jpg",
+    "assets/two-images-with-content-04.jpg",
+    "assets/two-images-with-content-05-scaled.jpg",
+    "assets/slider-gallery-01-1-790x1024.jpg",
+    "assets/20260210-IMG_0326.jpg",
+    "assets/20260210-IMG_9930.jpg",
+    "assets/IMG_7384-scaled.jpeg",
+    "assets/Screenshot-2026-04-06-at-2.09.42-PM.png",
+    "assets/content-with-links-01.jpg",
+    "assets/slider-02.jpg",
+    "assets/image-form-v2-01.jpg",
+    "assets/image-content-04.jpg",
+    "assets/image-content-rows-04-768x807.jpg",
+  ];
+
+  (function initHeroRotator() {
+    var rotators = Array.from(document.querySelectorAll("[data-rotator]"));
+    if (!rotators.length) return;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var current = rotators.map(function (el) {
+      var active = el.querySelector(".rotator__img.is-active");
+      return active ? active.getAttribute("src") : null;
+    });
+
+    function neighborsOf(index) {
+      var n = [];
+      if (index > 0) n.push(current[index - 1]);
+      if (index < rotators.length - 1) n.push(current[index + 1]);
+      return n;
+    }
+
+    function pickNext(index) {
+      var exclude = neighborsOf(index).concat([current[index]]);
+      var options = HERO_ROTATOR_POOL.filter(function (src) {
+        return exclude.indexOf(src) === -1;
+      });
+      if (!options.length) options = HERO_ROTATOR_POOL.slice();
+      return options[Math.floor(Math.random() * options.length)];
+    }
+
+    function swap(index) {
+      var el = rotators[index];
+      var activeImg = el.querySelector(".rotator__img.is-active");
+      var hiddenImg = el.querySelector(".rotator__img:not(.is-active)");
+      if (!activeImg || !hiddenImg) return;
+
+      var next = pickNext(index);
+      hiddenImg.src = next;
+
+      function reveal() {
+        hiddenImg.classList.add("is-active");
+        activeImg.classList.remove("is-active");
+        current[index] = next;
+      }
+
+      if (reduce) {
+        reveal();
+        return;
+      }
+      // wait for the new image to actually be ready so the crossfade
+      // doesn't reveal a blank/partial frame
+      if (hiddenImg.complete) reveal();
+      else hiddenImg.onload = reveal;
+    }
+
+    rotators.forEach(function (el, index) {
+      // stagger each slot's interval so they don't all swap in lockstep
+      var delay = 4200 + index * 1400;
+      setInterval(function () {
+        swap(index);
+      }, delay);
+    });
+  })();
 
   function revealEverything() {
     document.querySelectorAll("[data-reveal]").forEach(function (el) {
