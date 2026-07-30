@@ -1,0 +1,13 @@
+/* The theme's own CSS only lays out .header__container (the big logo +
+   Clients/Professionals CTAs) inside a max-width:1023px media query.
+   Outside that breakpoint there's no desktop rule at all, so on desktop
+   it falls back to plain stacked <div>s instead of collapsing into the
+   compact bar the live site actually shows (small logo + hamburger only).
+   This restores that compact desktop header without touching the mobile
+   layout, which already works correctly via the theme's own CSS. */
+@media (min-width: 1024px) {
+  .header__content,
+  .header__utilities {
+    display: none;
+  }
+}
