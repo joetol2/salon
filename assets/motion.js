@@ -187,6 +187,15 @@
     }
     var split = new SplitText(el, { type: type, linesClass: "split-line" });
     var units = type === "chars" ? split.chars : split.lines;
+    // A fixed per-character delay reads great on a short headline but turns
+    // a full paragraph into a multi-second crawl. Cap the whole cascade's
+    // total length instead, so long text compresses to fit rather than
+    // dragging out — short text (well under the cap already) is unaffected.
+    var staggerConfig = 0.08;
+    if (type === "chars") {
+      var naturalTotal = units.length * 0.02;
+      staggerConfig = naturalTotal <= 1.4 ? { each: 0.02, from: "start" } : { amount: 1.4, from: "start" };
+    }
     gsap.set(units, { autoAlpha: 0, yPercent: 100 });
     gsap.to(
       units,
@@ -195,7 +204,7 @@
         yPercent: 0,
         duration: 0.8,
         ease: "power4.out",
-        stagger: type === "chars" ? 0.02 : 0.08,
+        stagger: staggerConfig,
         scrollTrigger: { trigger: el, start: "top 85%" },
         onComplete: function () {
           split.revert();
