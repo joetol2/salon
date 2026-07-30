@@ -421,6 +421,11 @@
       });
 
       gsap.utils.toArray("[data-parallax-speed]").forEach(function (el) {
+        // data-parallax-speed doubles as a modifier read by the
+        // data-parallax-container handler above (scales that container's
+        // internal media range) — on an element that's also a container,
+        // it isn't asking for its own separate floating transform too.
+        if (el.hasAttribute("data-parallax-container")) return;
         var speed = parseFloat(el.getAttribute("data-parallax-speed")) || 1;
         var distance = (speed - 1) * 220;
         gsap.fromTo(
