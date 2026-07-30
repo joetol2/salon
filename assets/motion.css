@@ -53,6 +53,32 @@ html.lenis {
   will-change: transform;
 }
 
+/* Rotating hero images (data-rotator): two stacked layers crossfade via
+   opacity while the shared parallax transform above moves them together as
+   one unit, so the swap never desyncs from scroll. */
+[data-rotator] {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.rotator__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.1s ease;
+}
+.rotator__img.is-active {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotator__img {
+    transition: none;
+  }
+}
+
 /* ---------- reveal base states ----------
    No CSS-level hiding here on purpose: elements stay visible by default
    (no-JS / JS-failure fallback). motion.js sets the "from" state at
