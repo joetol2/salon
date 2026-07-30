@@ -7,7 +7,8 @@
  *   data-reveal="fade-up|mask|chars|lines"   single-element scroll reveal
  *   data-reveal-group + data-reveal-item     staggered group reveal
  *   data-parallax-container + data-parallax  scale-compensated media parallax
- *   data-parallax-speed="0.8"                direct element parallax (floating type)
+ *   data-parallax-speed="0.8"                direct element parallax (floating type, vertical)
+ *   data-parallax-x="1.2"                    direct element parallax (horizontal drift; sign = direction)
  *   data-pin-horizontal + data-pin-track     pinned horizontal scroll moment
  *   data-load-in                             animated on page load, not on scroll
  */
@@ -303,9 +304,14 @@
     setTimeout(forceRevealIfStuck, 1500);
   });
 
-  /* ---------------- parallax (desktop only) ---------------- */
+  /* ---------------- parallax (desktop only) ----------------
+   * 768px matches the theme's own breakpoint for swapping in the
+   * desktop-styled hero image (the mobile variant below that has its
+   * own separate, untouched markup) — below 1000px the parallax CSS
+   * was already applied to that image but the scroll animation never
+   * activated, leaving it visibly stuck at its initial offset. */
   ScrollTrigger.matchMedia({
-    "(min-width: 1000px)": function () {
+    "(min-width: 768px)": function () {
       gsap.utils.toArray("[data-parallax-container]").forEach(function (container) {
         var media = container.querySelector("[data-parallax]");
         if (!media) return;
@@ -332,6 +338,22 @@
             y: distance,
             ease: "none",
             scrollTrigger: { trigger: el.closest("section") || el, start: "top bottom", end: "bottom top", scrub: true },
+          }
+        );
+      });
+
+      // horizontal drift — sign gives direction (+ drifts left->right going
+      // down the page, - drifts right->left), magnitude gives distance in px
+      gsap.utils.toArray("[data-parallax-x]").forEach(function (el) {
+        var factor = parseFloat(el.getAttribute("data-parallax-x")) || 1;
+        var distance = factor * 90;
+        gsap.fromTo(
+          el,
+          { x: -distance },
+          {
+            x: distance,
+            ease: "none",
+            scrollTrigger: { trigger: el.closest("li") || el, start: "top bottom", end: "bottom top", scrub: true },
           }
         );
       });
