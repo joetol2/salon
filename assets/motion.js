@@ -14,6 +14,19 @@
 (function () {
   "use strict";
 
+  // Pulling the parallax image out of flow (position:absolute) means its
+  // container no longer has any in-flow content to derive a height from,
+  // so it collapses to 0 unless we give it one explicitly. Runs
+  // unconditionally — independent of GSAP/reduced-motion — since it's a
+  // layout fix, not an animation.
+  document.querySelectorAll("[data-parallax-container]").forEach(function (container) {
+    var media = container.querySelector("[data-parallax]");
+    if (!media) return;
+    var w = media.getAttribute("width");
+    var h = media.getAttribute("height");
+    if (w && h) container.style.aspectRatio = w + " / " + h;
+  });
+
   function revealEverything() {
     document.querySelectorAll("[data-reveal]").forEach(function (el) {
       el.style.opacity = "";
