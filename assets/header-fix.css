@@ -2,4 +2,15 @@
    a misread of a cropped reference screenshot that turned out to already
    be scrolled past the hero. Confirmed against the real live site: this
    content (the big logo + Clients/Professionals CTAs) is genuinely part
-   of the desktop hero and should render normally. No overrides here. */
+   of the desktop hero and should render normally. No overrides here.
+
+   (Also carries small sitewide polish tweaks below — kept here since this
+   stylesheet is already linked on all 7 pages, rather than adding yet
+   another <link> everywhere.) */
+
+/* Round the corners on the default teal buttons ("book my service",
+   "request suite info", etc). Color-modifier buttons (.btn--lava,
+   .btn--golden, .btn--black, .btn--outlined*) are left square. */
+.btn:not(.btn--lava):not(.btn--golden):not(.btn--black):not(.btn--outlined):not(.btn--outlined-black) {
+  border-radius: 8px;
+}
