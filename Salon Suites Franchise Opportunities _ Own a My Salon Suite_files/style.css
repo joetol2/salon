@@ -1,0 +1,18 @@
+/*
+Theme name: My Salon Suite Website rebranding
+Description: Custom Theme
+*/
+
+/*
+	Source SCSS styles are located in resources/scss/
+	The compiled bundle is saved to `dist/index.${fingerprint}.css`
+	(dist/manifest.json provides the exact path mapping).
+
+	The DEVELOPMENT.md file contains instructions how to get the build
+	process up & running.
+
+	If you need to make a quick fix, feel free to add CSS
+	below this comment -- it's loaded after the compiled bundle.
+*/
+
+p {  }
