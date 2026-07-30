@@ -38,17 +38,23 @@ html.lenis {
 
 /* ---------- parallax containers ---------- */
 /* Applied alongside existing figure/media classes. Scale-compensated: the
-   media sits at 130% height inside an overflow-hidden box so vertical
-   parallax translation never reveals an unpainted edge. */
+   media sits oversized inside an overflow-hidden box so vertical parallax
+   translation never reveals an unpainted edge underneath.
+   GSAP's yPercent scales off the *media's own* height (150%), not the
+   container's — a translation of N% of that 150%-tall box eats 1.5x more
+   of the margin than it looks like at a glance. 25%/150% leaves real
+   headroom for the full range motion.js actually drives (max ~11.2%
+   yPercent → ~16.8% of container height) plus slack for Lenis easing
+   overshoot, where the previous 15%/130% left under half a percent. */
 [data-parallax-container] {
   position: relative !important;
   overflow: hidden !important;
 }
 [data-parallax-container] [data-parallax] {
   position: absolute !important;
-  inset: -15% 0 auto 0 !important;
+  inset: -25% 0 auto 0 !important;
   width: 100% !important;
-  height: 130% !important;
+  height: 150% !important;
   object-fit: cover;
   will-change: transform;
 }
