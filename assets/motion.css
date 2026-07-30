@@ -1,0 +1,88 @@
+/* Motion layer — additive on top of the existing theme CSS. Nothing here
+   removes or overrides the base layout; it only adds the plumbing for
+   reveals, parallax, and the pinned horizontal moment. */
+
+:root {
+  --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-bg: var(--theme-color-sleek-black, #080001);
+}
+
+/* ---------- custom scrollbar (webkit + firefox) ---------- */
+html {
+  scrollbar-color: var(--theme-color-cool-seafoam, #78cdd1) var(--motion-bg);
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--motion-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    var(--theme-color-cool-seafoam, #78cdd1),
+    var(--theme-color-spicy-lava, #f15a29)
+  );
+  border-radius: 0;
+}
+
+/* Lenis drives the scroll; keep native smooth-scroll off so they don't fight */
+html.lenis {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+/* ---------- parallax containers ---------- */
+/* Applied alongside existing figure/media classes. Scale-compensated: the
+   media sits at 130% height inside an overflow-hidden box so vertical
+   parallax translation never reveals an unpainted edge. */
+[data-parallax-container] {
+  position: relative !important;
+  overflow: hidden !important;
+}
+[data-parallax-container] [data-parallax] {
+  position: absolute !important;
+  inset: -15% 0 auto 0 !important;
+  width: 100% !important;
+  height: 130% !important;
+  object-fit: cover;
+  will-change: transform;
+}
+
+/* ---------- reveal base states ----------
+   No CSS-level hiding here on purpose: elements stay visible by default
+   (no-JS / JS-failure fallback). motion.js sets the "from" state at
+   runtime via gsap.set() right before it animates, and clears
+   will-change when each tween completes. */
+[data-reveal] {
+  will-change: auto;
+}
+
+/* Mask-reveal targets get an overflow-hidden clip box; the inner element
+   is what actually translates/clips. Author marks the clip box with
+   data-reveal="mask" and motion.js wraps/targets its direct text nodes. */
+[data-reveal="mask"] {
+  overflow: hidden;
+  display: block;
+}
+
+/* ---------- pinned horizontal moment (Professionals slider) ---------- */
+[data-pin-horizontal] {
+  overflow: hidden;
+}
+[data-pin-track] {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-parallax-container] [data-parallax] {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
