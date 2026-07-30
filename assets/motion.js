@@ -117,33 +117,65 @@
   function loadInSequence() {
     var tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-    var logo = document.querySelector(".header__logo:not(.header__content--hidden-desktop) img");
-    var utilities = gsap.utils.toArray(".header__utilities li");
+    var stripes = gsap.utils.toArray(".color-stripes > span");
     var heroCols = gsap.utils.toArray(".hero-images__col");
+    var heroSection = document.querySelector("section.hero-images");
+    var header = document.querySelector(".header");
+    var copyEls = [
+      document.querySelector(".header__logo:not(.header__content--hidden-desktop) img"),
+      document.querySelector(".header__utilities"),
+    ].filter(Boolean);
 
-    if (logo) {
-      gsap.set(logo, { autoAlpha: 0, y: -16, scale: 0.96 });
-      tl.to(logo, withWillChange(logo, { autoAlpha: 1, y: 0, scale: 1, duration: 0.9 }), 0);
+    // 1. the three color stripes load in one at a time from the top
+    var stripesDone = 0;
+    if (stripes.length) {
+      gsap.set(stripes, { scaleY: 0, transformOrigin: "top center" });
+      tl.to(stripes, withWillChange(stripes, { scaleY: 1, duration: 0.45, stagger: 0.18 }), 0);
+      stripesDone = 0.45 + (stripes.length - 1) * 0.18;
     }
-    if (utilities.length) {
-      gsap.set(utilities, { autoAlpha: 0, y: 18 });
-      tl.to(
-        utilities,
-        withWillChange(utilities, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.12 }),
-        0.15
-      );
-    }
+
+    // 2. the photos slide out from behind the stripes, left to right
     if (heroCols.length) {
-      gsap.set(heroCols, { clipPath: "inset(0 0 100% 0)" });
+      gsap.set(heroCols, { xPercent: -100, autoAlpha: 0 });
       tl.to(
         heroCols,
-        withWillChange(heroCols, {
-          clipPath: "inset(0 0 0% 0)",
-          duration: 1.1,
-          stagger: 0.14,
-          ease: "power4.out",
+        withWillChange(heroCols, { xPercent: 0, autoAlpha: 1, duration: 0.85, stagger: 0.15 }),
+        stripesDone * 0.6
+      );
+    }
+    var heroDone = stripesDone * 0.6 + 0.85 + (heroCols.length ? (heroCols.length - 1) * 0.15 : 0);
+
+    // 3. the header copy slides in from behind the photos. Header and
+    // hero-images are separate, non-overlapping sections in normal flow, so
+    // this needs a real (temporary) stacking-order swap: sink the header
+    // below the hero section while the copy is transformed down into the
+    // photos' space, then bring it up through that boundary into its resting
+    // spot — restoring both elements' original z-index once it settles so
+    // nothing else on the page (nav, dropdowns) is permanently affected.
+    if (copyEls.length && header && heroSection) {
+      var headerOriginalZ = header.style.zIndex;
+      var heroOriginalPosition = heroSection.style.position;
+      var heroOriginalZ = heroSection.style.zIndex;
+
+      heroSection.style.position = heroSection.style.position || "relative";
+      heroSection.style.zIndex = "5";
+      header.style.zIndex = "1";
+
+      gsap.set(copyEls, { y: 260, autoAlpha: 0 });
+      tl.to(
+        copyEls,
+        withWillChange(copyEls, {
+          y: 0,
+          autoAlpha: 1,
+          duration: 1,
+          stagger: 0.1,
+          onComplete: function () {
+            header.style.zIndex = headerOriginalZ;
+            heroSection.style.position = heroOriginalPosition;
+            heroSection.style.zIndex = heroOriginalZ;
+          },
         }),
-        0.25
+        heroDone
       );
     }
   }
