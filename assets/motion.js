@@ -14,6 +14,23 @@
 (function () {
   "use strict";
 
+  function revealEverything() {
+    document.querySelectorAll("[data-reveal]").forEach(function (el) {
+      el.style.opacity = "";
+      el.style.visibility = "";
+      el.style.clipPath = "";
+      el.style.transform = "";
+    });
+  }
+
+  try {
+    init();
+  } catch (err) {
+    // whatever broke, the page's real content must not stay hidden because of it
+    revealEverything();
+  }
+
+  function init() {
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var hasGsap = typeof window.gsap !== "undefined";
   if (!hasGsap) return; // no-JS / failed CDN load: page is already fully visible, nothing to do
@@ -155,27 +172,61 @@
   }
 
   gsap.utils.toArray("[data-reveal]").forEach(function (el) {
-    var kind = el.getAttribute("data-reveal");
-    if (kind === "mask") maskReveal(el);
-    else if (kind === "chars" || kind === "lines") splitReveal(el, kind);
-    else fadeUpReveal(el);
+    try {
+      var kind = el.getAttribute("data-reveal");
+      if (kind === "mask") maskReveal(el);
+      else if (kind === "chars" || kind === "lines") splitReveal(el, kind);
+      else fadeUpReveal(el);
+    } catch (err) {
+      // one broken reveal shouldn't take the rest of the page's content down with it
+      el.style.opacity = "";
+      el.style.visibility = "";
+      el.style.clipPath = "";
+    }
   });
 
   gsap.utils.toArray("[data-reveal-group]").forEach(function (group) {
-    var items = gsap.utils.toArray("[data-reveal-item]", group);
-    if (!items.length) return;
-    gsap.set(items, { autoAlpha: 0, y: 50 });
-    gsap.to(
-      items,
-      withWillChange(items, {
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.85,
-        ease: "power4.out",
-        stagger: 0.12,
-        scrollTrigger: { trigger: group, start: "top 80%" },
-      })
-    );
+    try {
+      var items = gsap.utils.toArray("[data-reveal-item]", group);
+      if (!items.length) return;
+      gsap.set(items, { autoAlpha: 0, y: 50 });
+      gsap.to(
+        items,
+        withWillChange(items, {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.85,
+          ease: "power4.out",
+          stagger: 0.12,
+          scrollTrigger: { trigger: group, start: "top 80%" },
+        })
+      );
+    } catch (err) {
+      gsap.utils.toArray("[data-reveal-item]", group).forEach(function (el) {
+        el.style.opacity = "";
+        el.style.visibility = "";
+      });
+    }
+  });
+
+  /* ---------------- safety net ----------------
+   * Whatever the cause — a slow connection, a throw in one of the reveal
+   * branches above, a ScrollTrigger that never crosses its start point on
+   * an unusual viewport — content must never stay invisible forever.
+   * Belt-and-suspenders: force every [data-reveal] element visible a few
+   * seconds after load if it somehow never got animated in. */
+  function forceRevealIfStuck() {
+    document.querySelectorAll("[data-reveal]").forEach(function (el) {
+      var cs = window.getComputedStyle(el);
+      var visible = cs.visibility !== "hidden" && parseFloat(cs.opacity || "1") > 0.01;
+      if (!visible) {
+        gsap.set(el, { clearProps: "opacity,visibility,clipPath,transform" });
+      }
+    });
+  }
+  window.addEventListener("load", function () {
+    ScrollTrigger.refresh();
+    setTimeout(forceRevealIfStuck, 1500);
   });
 
   /* ---------------- parallax (desktop only) ---------------- */
@@ -241,8 +292,5 @@
       };
     },
   });
-
-  window.addEventListener("load", function () {
-    ScrollTrigger.refresh();
-  });
+  }
 })();
